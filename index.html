@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BDAI Studio V5 - Content Engine</title>
+    <title>BDAI Studio V6 - Debug Mode</title>
     <style>
         :root { --primary: #6366f1; --accent: #ec4899; --bg: #f1f5f9; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); padding: 20px; color: #1e293b; line-height: 1.5; }
-        .main-grid { display: grid; grid-template-columns: 400px 1fr; gap: 20px; max-width: 1400px; margin: 0 auto; }
+        .main-grid { display: grid; grid-template-columns: 420px 1fr; gap: 20px; max-width: 1500px; margin: 0 auto; }
         .sidebar { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); height: fit-content; position: sticky; top: 20px; border: 1px solid #e2e8f0; }
         .results-area { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .card { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border: 1px solid #f1f5f9; }
@@ -15,7 +15,7 @@
         h2 { color: var(--primary); margin: 0 0 20px 0; font-size: 1.5rem; display: flex; align-items: center; gap: 10px; }
         label { display: block; margin: 15px 0 5px; font-weight: 600; font-size: 13px; color: #64748b; }
         input, textarea, select, pre { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; box-sizing: border-box; font-size: 13px; transition: 0.2s; }
-        input:focus, textarea:focus, select:focus { border-color: var(--primary); outline: none; ring: 2px var(--primary); }
+        textarea { height: 80px; resize: vertical; }
         
         .tag-box { background: #f8fafc; border: 1px dashed #cbd5e1; padding: 15px; border-radius: 10px; margin-top: 10px; font-size: 12px; color: #334155; }
         
@@ -25,8 +25,11 @@
         .btn-download { background: #10b981; color: white; margin-top: 20px; }
         button:hover { transform: translateY(-2px); opacity: 0.9; }
 
-        canvas { width: 100%; height: auto; border-radius: 12px; background: #fff; border: 1px solid #e2e8f0; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+        canvas { width: 100%; height: auto; border-radius: 12px; background: #fff; border: 1px solid #e2e8f0; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); min-height: 300px; }
         .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; background: #e0e7ff; color: var(--primary); font-size: 11px; font-weight: 700; margin-bottom: 10px; }
+        
+        /* Debug Panel Style */
+        #debugPanel { background: #1e293b; color: #38bdf8; padding: 15px; border-radius: 10px; margin-top: 20px; font-family: monospace; font-size: 11px; overflow-x: auto; max-height: 200px; display: none; }
     </style>
 </head>
 <body>
@@ -37,15 +40,15 @@
         <label>1. API Key OpenAI</label>
         <input type="password" id="apiKey" placeholder="sk-...">
         
-        <label>2. Pilih Jadwal Content Plan (7 Hari)</label>
+        <label>2. Pilih Jadwal Content Plan</label>
         <select id="daySelector">
-            <option value="1">Hari 1: Productivity & Work (Bold/Vibrant)</option>
-            <option value="2">Hari 2: Mental Health (Pastel/Calm)</option>
-            <option value="3">Hari 3: Tech & Dev (Dark/Cyberpunk)</option>
-            <option value="4">Hari 4: Hydration/Health (Cute/Kawaii)</option>
-            <option value="5">Hari 5: Y2K/Retro (Neon/Hologram)</option>
-            <option value="6">Hari 6: Hobbies/Plants (Natural/Organic)</option>
-            <option value="7">Hari 7: Mix & Best Selling Styles</option>
+            <option value="1">Hari 1: Productivity (Vibrant)</option>
+            <option value="2">Hari 2: Mental Health (Pastel)</option>
+            <option value="3">Hari 3: Tech (Cyberpunk)</option>
+            <option value="4">Hari 4: Hydration (Cute)</option>
+            <option value="5">Hari 5: Y2K (Neon)</option>
+            <option value="6">Hari 6: Hobbies (Natural)</option>
+            <option value="7">Hari 7: Mix Styles</option>
         </select>
 
         <label>3. Masukkan Ide (Singkat saja)</label>
@@ -53,59 +56,61 @@
         
         <button class="btn-blue" id="btnDraft">Draft AI Concept & Tags</button>
         
-        <label>Final Prompt (Hasil Olahan AI)</label>
-        <textarea id="finalPromptText" readonly></textarea>
+        <label>Final Prompt (Olah AI)</label>
+        <textarea id="finalPromptText"></textarea>
 
-        <label>SEO Data (Siap Upload)</label>
-        <pre id="jsonOut">{ "status": "Ready to work" }</pre>
+        <label>SEO Data (JSON)</label>
+        <pre id="jsonOut">{ "status": "Ready" }</pre>
         
         <button class="btn-purple" id="btnExecute">Execute 2 Variants</button>
-        <div id="statusGlobal" style="text-align:center; font-size:12px; margin-top:10px; color:#64748b;"></div>
+        <div id="statusGlobal" style="text-align:center; font-size:12px; margin-top:10px; color:#64748b;">Ready.</div>
+        
+        <div id="debugPanel">Debug Info:</div>
     </div>
 
     <div class="results-area">
         <div class="card">
             <div class="status-badge">VARIAN A</div>
             <canvas id="canvas1" width="1024" height="1024"></canvas>
-            <div class="tag-box" id="tags1">Meta data akan muncul di sini...</div>
-            <button class="btn-download" id="dl1" style="display:none;">Download Varian A (PNG)</button>
+            <div class="tag-box" id="tags1">Meta data...</div>
+            <button class="btn-download" id="dl1" style="display:none;">Download Varian A</button>
         </div>
 
         <div class="card">
             <div class="status-badge">VARIAN B</div>
             <canvas id="canvas2" width="1024" height="1024"></canvas>
-            <div class="tag-box" id="tags2">Meta data akan muncul di sini...</div>
-            <button class="btn-download" id="dl2" style="display:none;">Download Varian B (PNG)</button>
+            <div class="tag-box" id="tags2">Meta data...</div>
+            <button class="btn-download" id="dl2" style="display:none;">Download Varian B</button>
         </div>
     </div>
 </div>
 
 <script>
     const dayStyles = {
-        "1": { style: "Vibrant flat vector, bold lines, professional", tags: "productivity, work, startup, goal getter" },
-        "2": { style: "Soft pastel colors, minimalist line art, calming", tags: "self care, mental health, wellness, aesthetic" },
-        "3": { style: "Cyberpunk, dark mode, neon accents, techy", tags: "coding, programmer, tech life, software engineer" },
-        "4": { style: "Kawaii, cute characters, bright bubbly colors", tags: "hydration, hydroflask, cute, kids, summer" },
-        "5": { style: "Y2K aesthetic, retro 90s, grain texture, hologram look", tags: "retro, 90s, vintage, y2k style" },
-        "6": { style: "Natural tones, organic shapes, cottagecore style", tags: "plants, garden, nature, sustainable" },
-        "7": { style: "Trending high-contrast sticker style", tags: "bestseller, trending, gift idea" }
+        "1": { style: "Vibrant flat vector, bold lines", tags: "productivity, work, quote" },
+        "2": { style: "Soft pastel, minimalist line art", tags: "self care, mental health, aesthetic" },
+        "3": { style: "Cyberpunk, dark mode, neon", tags: "coding, tech life, engineer" },
+        "4": { style: "Kawaii, cute character, bright bubbly", tags: "hydration, cute, hydroflask" },
+        "5": { style: "Y2K aesthetic, retro 90s, hologram look", tags: "retro, 90s, vintage, trendy" },
+        "6": { style: "Natural tones, organic, cottagecore", tags: "plants, nature, sustainable" },
+        "7": { style: "Trending sticker style", tags: "bestseller, trending" }
     };
+
+    const debugPanel = document.getElementById('debugPanel');
+    function logDebug(msg) {
+        debugPanel.style.display = 'block';
+        debugPanel.innerText += "\n> " + msg;
+        console.log(msg);
+    }
 
     document.getElementById('btnDraft').onclick = () => {
         const day = document.getElementById('daySelector').value;
-        const idea = document.getElementById('userInput').value || "Inspirational Concept";
+        const idea = document.getElementById('userInput').value || "Concept";
         const config = dayStyles[day];
-        
-        // Intelligent Prompting
-        const finalPrompt = `A high-end professional die-cut sticker of ${idea}. Style: ${config.style}. Clean thick white border, perfectly flat solid white background, 300 DPI, centered, vector illustration. No shadows, no gradients on background.`;
-        
+        const finalPrompt = `A high-end die-cut sticker of ${idea}. Style: ${config.style}. Clean thick white border, perfectly flat solid white background, 300 DPI, centered vector illustration.`;
         document.getElementById('finalPromptText').value = finalPrompt;
-        document.getElementById('jsonOut').innerText = JSON.stringify({
-            day: day,
-            target_niche: config.tags,
-            final_prompt: finalPrompt,
-            brand: "BDAI Studio"
-        }, null, 2);
+        document.getElementById('jsonOut').innerText = JSON.stringify({idea, finalPrompt}, null, 2);
+        logDebug("Prompt drafted.");
     };
 
     document.getElementById('btnExecute').onclick = async () => {
@@ -113,42 +118,71 @@
         const prompt = document.getElementById('finalPromptText').value;
         const idea = document.getElementById('userInput').value;
         
-        if(!key || !prompt) return alert("API Key dan Prompt wajib ada!");
+        if(!key || !prompt) return alert("API Key & Prompt wajib!");
         
-        document.getElementById('statusGlobal').innerText = "Generating 2 Designs... (30-60 detik)";
+        document.getElementById('statusGlobal').innerText = "Processing... (30-60 detik)";
+        debugPanel.innerText = "Debug Info:"; // Reset debug
+        logDebug("Starting API Request...");
         
         try {
+            const reqData = { model: "dall-e-3", prompt: prompt, n: 1, size: "1024x1024" };
+            
             const req1 = fetch('https://api.openai.com/v1/images/generations', {
                 method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
-                body: JSON.stringify({ model: "dall-e-3", prompt: prompt, n: 1, size: "1024x1024" })
+                body: JSON.stringify(reqData)
             });
             const req2 = fetch('https://api.openai.com/v1/images/generations', {
                 method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
-                body: JSON.stringify({ model: "dall-e-3", prompt: prompt + " --alternative style", n: 1, size: "1024x1024" })
+                body: JSON.stringify({...reqData, prompt: prompt + " --alternative style"})
             });
 
-            const [r1, r2] = await Promise.all([req1, req2]);
-            const d1 = await r1.json(); const d2 = await r2.json();
+            const results = await Promise.all([req1, req2]);
+            const d1 = await results[0].json();
+            const d2 = await results[1].json();
 
-            if(d1.data) processImg(d1.data[0].url, 1, idea);
-            if(d2.data) processImg(d2.data[0].url, 2, idea);
+            logDebug("API Response 1 received.");
+            logDebug("API Response 2 received.");
+
+            // Cek Error dari OpenAI
+            if(d1.error) {
+                logDebug("ERROR API 1: " + d1.error.message);
+                document.getElementById('statusGlobal').innerText = "Error Varian A.";
+            } else {
+                logDebug("URL 1: " + d1.data[0].url.substring(0, 50) + "...");
+                processImg(d1.data[0].url, 1, idea);
+            }
+
+            if(d2.error) {
+                logDebug("ERROR API 2: " + d2.error.message);
+                document.getElementById('statusGlobal').innerText = "Error Varian B.";
+            } else {
+                logDebug("URL 2: " + d2.data[0].url.substring(0, 50) + "...");
+                processImg(d2.data[0].url, 2, idea);
+            }
             
-            document.getElementById('statusGlobal').innerText = "Berhasil! Silakan download & copy tags.";
+            if(!d1.error && !d2.error) document.getElementById('statusGlobal').innerText = "Selesai! Gambar sedang dimuat.";
+
         } catch (e) {
-            document.getElementById('statusGlobal').innerText = "Error: " + e.message;
+            logDebug("CRITICAL ERROR: " + e.message);
+            document.getElementById('statusGlobal').innerText = "Koneksi Gagal.";
         }
     };
 
     function processImg(url, idx, idea) {
+        logDebug(`Loading Image ${idx} to Canvas...`);
         const canv = document.getElementById('canvas'+idx);
-        const btn = document.getElementById('dl'+idx);
-        const tagBox = document.getElementById('tags'+idx);
+        const ctx = canv.getContext('2d');
         const img = new Image();
-        img.crossOrigin = "anonymous";
+        
+        // PENTING: CORS HANDLING
+        img.setAttribute('crossOrigin', 'anonymous'); 
         img.src = url;
         
         img.onload = () => {
-            const ctx = canv.getContext('2d');
+            logDebug(`Image ${idx} loaded. Processing background...`);
+            // Hapus isi canvas sebelumnya
+            ctx.clearRect(0, 0, 1024, 1024);
+            
             const off = document.createElement('canvas');
             off.width = 1024; off.height = 1024;
             const oCtx = off.getContext('2d');
@@ -156,35 +190,48 @@
             
             const imgData = oCtx.getImageData(0,0,1024,1024);
             const p = imgData.data;
-            const r=p[0], g=p[1], b=p[2];
+            const targetR=p[0], targetG=p[1], targetB=p[2]; // Asumsi background solid
 
             for (let i = 0; i < p.length; i += 4) {
-                if (Math.abs(p[i]-r)<30 && Math.abs(p[i+1]-g)<30 && Math.abs(p[i+2]-b)<30) p[i+3] = 0;
+                // Hapus warna background (tolerance dinaikkan agar lebih bersih)
+                if (Math.abs(p[i]-targetR)<40 && Math.abs(p[i+1]-targetG)<40 && Math.abs(p[i+2]-targetB)<40) p[i+3] = 0;
             }
             oCtx.putImageData(imgData, 0, 0);
 
-            ctx.clearRect(0,0,1024,1024);
+            logDebug(`Background ${idx} removed. Adding white outline...`);
+            
+            // Gambar White Outline (Proses Iteratif untuk ketebalan)
             ctx.shadowBlur = 0;
+            ctx.shadowColor = "white";
+            const outlineThickness = 14;
             for(let i=0; i<360; i+=10) {
-                ctx.drawImage(off, 14 * Math.cos(i*Math.PI/180), 14 * Math.sin(i*Math.PI/180));
+                ctx.drawImage(off, outlineThickness * Math.cos(i*Math.PI/180), outlineThickness * Math.sin(i*Math.PI/180));
             }
+            
+            // Solidkan Outline Putih
             ctx.globalCompositeOperation = 'source-in';
             ctx.fillStyle = "white";
             ctx.fillRect(0,0,1024,1024);
             ctx.globalCompositeOperation = 'source-over';
+            
+            // Timpa gambar subjek asli di atas outline
             ctx.drawImage(off, 0, 0);
 
-            const day = document.getElementById('daySelector').value;
-            const config = dayStyles[day];
-            tagBox.innerHTML = `<strong>Judul:</strong> ${idea} - Aesthetic Sticker<br><br><strong>Copy Tags:</strong><br>${idea.toLowerCase()}, ${config.tags}, bdai studio, sticker, vinyl, aesthetic`;
-            btn.style.display = 'block';
-            btn.onclick = () => {
+            const config = dayStyles[document.getElementById('daySelector').value];
+            document.getElementById('tags'+idx).innerHTML = `<strong>Judul:</strong> ${idea} Sticker<br><strong>Tags:</strong> ${idea.toLowerCase()}, ${config.tags}, bdai studio, aesthetic`;
+            document.getElementById('dl'+idx).style.display = 'block';
+            document.getElementById('dl'+idx).onclick = () => {
                 const a = document.createElement('a');
                 a.download = `BDAI-${idea.replace(/\s+/g, '-')}-V${idx}.png`;
                 a.href = canv.toDataURL();
                 a.click();
             };
+            logDebug(`Canvas ${idx} complete.`);
         };
+
+        img.onerror = (err) => {
+            logDebug(`ERROR Loading Image ${idx}: Mungkin masalah CORS browser atau URL kadaluwarsa.`);
+        }
     }
 </script>
 </body>

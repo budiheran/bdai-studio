@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BDAI Studio V5 - Content Engine</title>
+    <style>
+        :root { --primary: #6366f1; --accent: #ec4899; --bg: #f1f5f9; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); padding: 20px; color: #1e293b; line-height: 1.5; }
+        .main-grid { display: grid; grid-template-columns: 400px 1fr; gap: 20px; max-width: 1400px; margin: 0 auto; }
+        .sidebar { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); height: fit-content; position: sticky; top: 20px; border: 1px solid #e2e8f0; }
+        .results-area { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .card { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border: 1px solid #f1f5f9; }
+        
+        h2 { color: var(--primary); margin: 0 0 20px 0; font-size: 1.5rem; display: flex; align-items: center; gap: 10px; }
+        label { display: block; margin: 15px 0 5px; font-weight: 600; font-size: 13px; color: #64748b; }
+        input, textarea, select, pre { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; box-sizing: border-box; font-size: 13px; transition: 0.2s; }
+        input:focus, textarea:focus, select:focus { border-color: var(--primary); outline: none; ring: 2px var(--primary); }
+        
+        .tag-box { background: #f8fafc; border: 1px dashed #cbd5e1; padding: 15px; border-radius: 10px; margin-top: 10px; font-size: 12px; color: #334155; }
+        
+        button { width: 100%; padding: 14px; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; margin-top: 10px; transition: 0.3s; font-size: 14px; }
+        .btn-blue { background: var(--primary); color: white; box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4); }
+        .btn-purple { background: #7c3aed; color: white; box-shadow: 0 4px 14px rgba(124, 58, 237, 0.4); }
+        .btn-download { background: #10b981; color: white; margin-top: 20px; }
+        button:hover { transform: translateY(-2px); opacity: 0.9; }
+
+        canvas { width: 100%; height: auto; border-radius: 12px; background: #fff; border: 1px solid #e2e8f0; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; background: #e0e7ff; color: var(--primary); font-size: 11px; font-weight: 700; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="main-grid">
+    <div class="sidebar">
+        <h2>🚀 BDAI Content Engine</h2>
+        <label>1. API Key OpenAI</label>
+        <input type="password" id="apiKey" placeholder="sk-...">
+        
+        <label>2. Pilih Jadwal Content Plan (7 Hari)</label>
+        <select id="daySelector">
+            <option value="1">Hari 1: Productivity & Work (Bold/Vibrant)</option>
+            <option value="2">Hari 2: Mental Health (Pastel/Calm)</option>
+            <option value="3">Hari 3: Tech & Dev (Dark/Cyberpunk)</option>
+            <option value="4">Hari 4: Hydration/Health (Cute/Kawaii)</option>
+            <option value="5">Hari 5: Y2K/Retro (Neon/Hologram)</option>
+            <option value="6">Hari 6: Hobbies/Plants (Natural/Organic)</option>
+            <option value="7">Hari 7: Mix & Best Selling Styles</option>
+        </select>
+
+        <label>3. Masukkan Ide (Singkat saja)</label>
+        <input type="text" id="userInput" placeholder="Contoh: Kopi, Kucing, Semangat">
+        
+        <button class="btn-blue" id="btnDraft">Draft AI Concept & Tags</button>
+        
+        <label>Final Prompt (Hasil Olahan AI)</label>
+        <textarea id="finalPromptText" readonly></textarea>
+
+        <label>SEO Data (Siap Upload)</label>
+        <pre id="jsonOut">{ "status": "Ready to work" }</pre>
+        
+        <button class="btn-purple" id="btnExecute">Execute 2 Variants</button>
+        <div id="statusGlobal" style="text-align:center; font-size:12px; margin-top:10px; color:#64748b;"></div>
+    </div>
+
+    <div class="results-area">
+        <div class="card">
+            <div class="status-badge">VARIAN A</div>
+            <canvas id="canvas1" width="1024" height="1024"></canvas>
+            <div class="tag-box" id="tags1">Meta data akan muncul di sini...</div>
+            <button class="btn-download" id="dl1" style="display:none;">Download Varian A (PNG)</button>
+        </div>
+
+        <div class="card">
+            <div class="status-badge">VARIAN B</div>
+            <canvas id="canvas2" width="1024" height="1024"></canvas>
+            <div class="tag-box" id="tags2">Meta data akan muncul di sini...</div>
+            <button class="btn-download" id="dl2" style="display:none;">Download Varian B (PNG)</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const dayStyles = {
+        "1": { style: "Vibrant flat vector, bold lines, professional", tags: "productivity, work, startup, goal getter" },
+        "2": { style: "Soft pastel colors, minimalist line art, calming", tags: "self care, mental health, wellness, aesthetic" },
+        "3": { style: "Cyberpunk, dark mode, neon accents, techy", tags: "coding, programmer, tech life, software engineer" },
+        "4": { style: "Kawaii, cute characters, bright bubbly colors", tags: "hydration, hydroflask, cute, kids, summer" },
+        "5": { style: "Y2K aesthetic, retro 90s, grain texture, hologram look", tags: "retro, 90s, vintage, y2k style" },
+        "6": { style: "Natural tones, organic shapes, cottagecore style", tags: "plants, garden, nature, sustainable" },
+        "7": { style: "Trending high-contrast sticker style", tags: "bestseller, trending, gift idea" }
+    };
+
+    document.getElementById('btnDraft').onclick = () => {
+        const day = document.getElementById('daySelector').value;
+        const idea = document.getElementById('userInput').value || "Inspirational Concept";
+        const config = dayStyles[day];
+        
+        // Intelligent Prompting
+        const finalPrompt = `A high-end professional die-cut sticker of ${idea}. Style: ${config.style}. Clean thick white border, perfectly flat solid white background, 300 DPI, centered, vector illustration. No shadows, no gradients on background.`;
+        
+        document.getElementById('finalPromptText').value = finalPrompt;
+        document.getElementById('jsonOut').innerText = JSON.stringify({
+            day: day,
+            target_niche: config.tags,
+            final_prompt: finalPrompt,
+            brand: "BDAI Studio"
+        }, null, 2);
+    };
+
+    document.getElementById('btnExecute').onclick = async () => {
+        const key = document.getElementById('apiKey').value;
+        const prompt = document.getElementById('finalPromptText').value;
+        const idea = document.getElementById('userInput').value;
+        
+        if(!key || !prompt) return alert("API Key dan Prompt wajib ada!");
+        
+        document.getElementById('statusGlobal').innerText = "Generating 2 Designs... (30-60 detik)";
+        
+        try {
+            const req1 = fetch('https://api.openai.com/v1/images/generations', {
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+                body: JSON.stringify({ model: "dall-e-3", prompt: prompt, n: 1, size: "1024x1024" })
+            });
+            const req2 = fetch('https://api.openai.com/v1/images/generations', {
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+                body: JSON.stringify({ model: "dall-e-3", prompt: prompt + " --alternative style", n: 1, size: "1024x1024" })
+            });
+
+            const [r1, r2] = await Promise.all([req1, req2]);
+            const d1 = await r1.json(); const d2 = await r2.json();
+
+            if(d1.data) processImg(d1.data[0].url, 1, idea);
+            if(d2.data) processImg(d2.data[0].url, 2, idea);
+            
+            document.getElementById('statusGlobal').innerText = "Berhasil! Silakan download & copy tags.";
+        } catch (e) {
+            document.getElementById('statusGlobal').innerText = "Error: " + e.message;
+        }
+    };
+
+    function processImg(url, idx, idea) {
+        const canv = document.getElementById('canvas'+idx);
+        const btn = document.getElementById('dl'+idx);
+        const tagBox = document.getElementById('tags'+idx);
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.src = url;
+        
+        img.onload = () => {
+            const ctx = canv.getContext('2d');
+            const off = document.createElement('canvas');
+            off.width = 1024; off.height = 1024;
+            const oCtx = off.getContext('2d');
+            oCtx.drawImage(img, 0,0,1024,1024);
+            
+            const imgData = oCtx.getImageData(0,0,1024,1024);
+            const p = imgData.data;
+            const r=p[0], g=p[1], b=p[2];
+
+            for (let i = 0; i < p.length; i += 4) {
+                if (Math.abs(p[i]-r)<30 && Math.abs(p[i+1]-g)<30 && Math.abs(p[i+2]-b)<30) p[i+3] = 0;
+            }
+            oCtx.putImageData(imgData, 0, 0);
+
+            ctx.clearRect(0,0,1024,1024);
+            ctx.shadowBlur = 0;
+            for(let i=0; i<360; i+=10) {
+                ctx.drawImage(off, 14 * Math.cos(i*Math.PI/180), 14 * Math.sin(i*Math.PI/180));
+            }
+            ctx.globalCompositeOperation = 'source-in';
+            ctx.fillStyle = "white";
+            ctx.fillRect(0,0,1024,1024);
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.drawImage(off, 0, 0);
+
+            const day = document.getElementById('daySelector').value;
+            const config = dayStyles[day];
+            tagBox.innerHTML = `<strong>Judul:</strong> ${idea} - Aesthetic Sticker<br><br><strong>Copy Tags:</strong><br>${idea.toLowerCase()}, ${config.tags}, bdai studio, sticker, vinyl, aesthetic`;
+            btn.style.display = 'block';
+            btn.onclick = () => {
+                const a = document.createElement('a');
+                a.download = `BDAI-${idea.replace(/\s+/g, '-')}-V${idx}.png`;
+                a.href = canv.toDataURL();
+                a.click();
+            };
+        };
+    }
+</script>
+</body>
+</html>
